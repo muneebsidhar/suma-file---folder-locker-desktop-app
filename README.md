@@ -1,23 +1,25 @@
 # SUMA — File & Folder Locker (v2, multi-file)
 
-## Run karne ka tareeqa (Windows)
+**SUMA (Secure Utility Management App)** — a desktop file & folder locker for Windows.
+Lock files and folders behind a master password with real encryption.
 
-1. Python 3.10+ install karo (python.org se).
-2. Is folder mein terminal kholo (folder mein right-click → "Open in Terminal").
-3. Dependencies install karo:
+## Running (Windows)
+
+1. Install Python 3.10+ from [python.org](https://www.python.org).
+2. Open a terminal in this folder (right-click the folder → "Open in Terminal").
+3. Install dependencies:
 
 ```
 pip install PySide6 cryptography
 ```
 
-4. App chalao:
+4. Run the app:
 
 ```
 python main.py
 ```
 
-Hamesha **isi folder se** `python main.py` chalao — saari files ek hi folder mein
-honi chahiye.
+Always run `python main.py` **from this folder** — all files must live in the same folder.
 
 ## Tests
 
@@ -25,39 +27,58 @@ honi chahiye.
 python test_suma.py
 ```
 
-31 automated tests: password hashing (purana + naya format), file encryption
-round-trip, purani encrypted files ka decrypt, tamper detection, safe lock/unlock,
-manifest backup/recovery, ZIP-slip protection, aur legacy vault migration.
+31 automated tests: password hashing (old + new format), file encryption
+round-trip, decryption of legacy encrypted files, tamper detection, safe
+lock/unlock, manifest backup/recovery, ZIP-slip protection, and legacy vault
+migration.
 
-## Files ka hisab
+## File map
 
-| File            | Kaam |
-|-----------------|------|
-| `main.py`       | Entry point: splash screen + app launch. Bas! |
-| `config.py`     | Saare raste (paths): `%APPDATA%/SUMA` mein config/vault, purane vault ki talaash aur safe migration, profile picture |
-| `crypto.py`     | Password hashing (PBKDF2 600k, purane 200k se auto-upgrade), Fernet keys, tukron wali file encryption |
-| `vault.py`      | VaultEngine: safe lock/unlock (temp file → verify → atomic save), manifest backup, ZIP-slip se hifazat |
-| `stego.py`      | Recovery key ko tasveer mein chhupana / nikalna |
-| `utils.py`      | Chhote helpers: file size format, password generator, file categories |
-| `ui_widgets.py` | Chhote UI tukre: buttons, cards, avatar, sidebar, file rows |
-| `screens.py`    | Saari screens: setup, unlock, dashboard, settings, recovery waghera |
+| File            | Purpose |
+|-----------------|---------|
+| `main.py`       | Entry point: splash screen + app launch. That's it. |
+| `config.py`     | All paths: config/vault under `%APPDATA%/SUMA`, legacy vault discovery and safe migration, profile picture |
+| `crypto.py`     | Password hashing (PBKDF2 600k, auto-upgrade from legacy 200k), Fernet keys, chunked file encryption |
+| `vault.py`      | VaultEngine: safe lock/unlock (temp file → verify → atomic save), manifest backup, ZIP-slip protection |
+| `stego.py`      | Hiding / extracting the recovery key inside a picture (LSB steganography) |
+| `utils.py`      | Small helpers: file-size formatting, password generator, file categories |
+| `ui_widgets.py` | Small UI pieces: buttons, cards, avatar, sidebar, file rows |
+| `screens.py`    | All screens: setup, unlock, dashboard, settings, recovery, etc. |
 | `app.py`        | Title bar + MainWindow (navigation, tray, auto-lock, hotkey) |
 | `test_suma.py`  | Automated tests |
 
-Kuch dhoondhna ho to file ke naam se pata chal jata hai — crypto ka masla
-`crypto.py` mein, screen ka masla `screens.py` mein.
+Looking for something? The file name tells you where it lives — a crypto
+issue is in `crypto.py`, a screen issue in `screens.py`.
 
-## Pehli baar chalane pe (migration)
+## First run (migration)
 
-Agar tumhara purana vault `D:/SUMA` ya usi folder mein hai to app usay khud
-dhoondh kar `%APPDATA%/SUMA` mein **copy** kar legi (purana data wahin rahega,
-delete nahi hoga) aur ek message dikhayegi. Password, files aur recovery
-sab waise ke waise.
+If your old vault is in `D:/SUMA` or in this folder, the app finds it and
+**copies** it to `%APPDATA%/SUMA` (the old data stays where it is — nothing is
+deleted) and shows a message. Password, files and recovery stay exactly as they
+were.
 
-## Zaroori baatein
+## Building the .exe (Windows)
 
-- Master password + recovery tasveer **dono** gum ho jayein to data wapas
-  nahi aa sakta. Recovery tasveer sambhal kar rakho.
-- SSD/disk par delete ki hui file ke nishan baqi reh sakte hain — SUMA
-  "secure delete" ka daawa nahi karta.
-- Vault ka data `%APPDATA%/SUMA/vault` mein rehta hai.
+```
+pip install pyinstaller
+pyinstaller --clean --onefile --windowed --name SUMA ^
+  --icon assets\suma-icon.ico ^
+  --add-data "assets;assets" ^
+  --add-binary "<python-install>\abi3t-compat\python3t.dll;." ^
+  main.py
+```
+
+The result lands in `dist\SUMA.exe` — no Python needed to run it.
+(`python3t.dll` lives next to your Python install; without it the frozen app
+cannot load `cryptography`.)
+See `SUMA-Setup.iss` for building the Windows installer with Inno Setup.
+
+## Important notes
+
+- If you lose **both** your master password and your recovery picture, your data
+  cannot be recovered. Keep your recovery picture safe.
+- Traces of deleted files may remain on SSD/disk — SUMA does not claim to be a
+  "secure delete" tool.
+- Vault data lives in `%APPDATA%/SUMA/vault`.
+
+© 2026 MRS KRYPTON — All Rights Reserved
